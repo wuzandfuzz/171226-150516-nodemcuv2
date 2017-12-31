@@ -255,6 +255,45 @@ void testwriteBit(int col, int row, int highlow) //fix performance here
   digitalWrite(EN, LOW);
   delayMicroseconds(capRecoverDel);
 }
+void serialscreenWrite()
+{
+  const short bitmaskArray[17] = 
+  {
+    0b0000000000000000, //not used, a way to blank stuff
+    0b0000000000000001,
+    0b0000000000000010,
+    0b0000000000000100,
+    0b0000000000001000,
+    0b0000000000010000,
+    0b0000000000100000,
+    0b0000000001000000,
+    0b0000000010000000,
+    0b0000000100000000,
+    0b0000001000000000,
+    0b0000010000000000,
+    0b0000100000000000,
+    0b0001000000000000,
+    0b0010000000000000,
+    0b0100000000000000,
+    0b1000000000000000,
+  };
+  Serial.println("Start Panel");
+  for (int i=1; i<17; i++){
+    Serial.print(i);
+    if (i<10){
+      Serial.print(" ");
+    }
+    Serial.print(":");
+    for (int j=1; j<29; j++){
+      if (bitmaskArray[i]&currentScreen[j] == 0){
+        Serial.print(".");
+        }
+      else{
+        Serial.print("#");
+      }
+    }
+  }
+}
 
 void testpanelSweep()
 {
@@ -292,18 +331,20 @@ void writeScreen(short writeFrame[29]){
     0b0010000000000000,
     0b0100000000000000,
     0b1000000000000000,
-  }
-  for (int i=1; i<29; i++){
-    for (int j=1; i<17; j++){
-      if (bitmaskArray[j]&writeFrame[i] == 0){
+  };
+  for (int i=1; i<17; i++){
+    for (int j=1; j<29; j++){
+      if (bitmaskArray[i]&writeFrame[j] == 0){
         testwriteBit(i,j,0);
-      else
+        }
+      else{
         testwriteBit(i,j,1);
       }
     }
   }
-  currentScreen[29] = writeFrame[29];
+  memcpy(writeFrame, currentScreen, sizeof(currentScreen));
 }
+
 void setup()
 {
     pinMode(CS,   OUTPUT);
@@ -356,7 +397,8 @@ void setup()
 
 void loop()
 {
-  writeScreen(currentScreen[29]);
+  writeScreen(currentScreen);
+
   /*  
   currTime = millis();
   Serial.print("Milliseconds since Boot");
