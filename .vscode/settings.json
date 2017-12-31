@@ -1,0 +1,5 @@
+{
+    "terminal.integrated.env.osx": {
+        "PATH": "/Users/paulimb/.platformio/penv/bin:/Users/paulimb/.rvm/gems/ruby-2.2.5/bin:/Users/paulimb/.rvm/gems/ruby-2.2.5@global/bin:/Users/paulimb/.rvm/rubies/ruby-2.2.5/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/opt/X11/bin:/Users/paulimb/.rvm/bin"
+    }
+}

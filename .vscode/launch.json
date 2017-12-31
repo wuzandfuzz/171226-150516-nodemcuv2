@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "gdb",
+            "request": "launch",
+            "cwd": "${workspaceRoot}",
+            "name": "PlatformIO Debugger",
+            "target": "/Users/paulimb/Documents/PlatformIO/Projects/171226-150516-nodemcuv2/.pioenvs/nodemcuv2/firmware.elf",
+            "gdbpath": "/Users/paulimb/.platformio/penv/bin/piodebuggdb",
+            "autorun": [ "source .pioinit" ]
+        }
+    ]
+}
