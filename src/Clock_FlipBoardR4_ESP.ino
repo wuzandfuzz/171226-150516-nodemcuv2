@@ -257,7 +257,7 @@ void testwriteBit(int col, int row, int highlow) //fix performance here
 }
 void serialscreenWrite()
 {
-  const short bitmaskArray[17] = 
+ short bitmaskArray[17] = 
   {
     0b0000000000000000, //not used, a way to blank stuff
     0b0000000000000001,
@@ -292,6 +292,7 @@ void serialscreenWrite()
         Serial.print("#");
       }
     }
+  Serial.print('\n');
   }
 }
 
@@ -362,7 +363,7 @@ void setup()
     digitalWrite(SEL3, HIGH);
     digitalWrite(SEL4, HIGH);
 
-    Serial.begin(115200);
+    Serial.begin(9600);
     delay(1000);
     SPI.begin();
     digitalWrite(EN, HIGH);
@@ -378,6 +379,7 @@ void setup()
   /* Explicitly set the ESP8266 to be a WiFi-client, otherwise, it by default,
      would try to act as both a client and an access-point and could cause
      network-issues with your other WiFi-devices on your WiFi-network. */
+  /*
     WiFi.begin(ssid, password);
   
     while (WiFi.status() != WL_CONNECTED) {
@@ -389,6 +391,7 @@ void setup()
   Serial.println("WiFi connected");  
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
+  */
   
   for (int i = 0; i<29; i++){
     currentScreen[i] = 0b0000000000000000;
@@ -397,7 +400,9 @@ void setup()
 
 void loop()
 {
-  writeScreen(currentScreen);
+  //writeScreen(currentScreen);
+  serialscreenWrite();
+  delay(5000);
 
   /*  
   currTime = millis();
