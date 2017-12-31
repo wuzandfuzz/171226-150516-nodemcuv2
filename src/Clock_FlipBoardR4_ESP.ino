@@ -1,19 +1,38 @@
+#include <ESP8266WiFi.h>
+//#include <ESP8266WiFiAP.h>
+//#include <ESP8266WiFiGeneric.h>
+//#include <ESP8266WiFiMulti.h>
+//#include <ESP8266WiFiScan.h>
+//#include <ESP8266WiFiSTA.h>
+//#include <ESP8266WiFiType.h>
+#include <WiFiClient.h>
+//#include <WiFiClientSecure.h>
+//#include <WiFiServer.h>
+#include <WiFiUdp.h>
+
 #include <dummy.h>
 
 #include <SPI.h>
+
+const char* ssid     = "DOOMFORTRESS_24";
+const char* password = "kimokimo84";
 
 const byte TEST1 = B00010000; 
 const byte TEST2 = B00000000;
 const byte ZEROES = B00000000;
 const byte RESETBYTE = B00000001;
-int CS = 15; //checkthis
-int EN = 16;
-int SEL1 = 5;
-int SEL2 = 4;
-int SEL3 = 0;
-int SEL4 = 2;
+const int CS = 15; 
+const int EN = 16;
+const int SEL1 = 5;
+const int SEL2 = 4;
+const int SEL3 = 0;
+const int SEL4 = 2;
 
-uint8_t defarray[9][4] = {
+short currentScreen[29];
+int currTime = 0;
+
+uint8_t defarray[9][4] = 
+{
   {0,0,0,0}, //0 not used
   {1,0,0,0}, //1
   {0,1,0,0}, //2
@@ -24,7 +43,9 @@ uint8_t defarray[9][4] = {
   {1,1,1,0}, //7
   {0,0,0,1}, //8
 };
-byte hpdefarray[9] = {
+
+byte hpdefarray[9] = 
+{
   B11000011, //reset
   B00100000,
   B00010000, //2
@@ -50,15 +71,15 @@ struct indexEntry
 
 indexEntry rowData[17] =
 {
-  rowData[0] =  {1, B00000001, B00000000, B00000001, B00000000}, //0 not used
+  rowData[0] =  {1, B00000001, B11100000, B00000001, B00000000}, //0 not used
   rowData[1] =  {3, B00000000, B00000100, B00000000, B00000010},
-  rowData[2] =  {1, B00010000, B00000000, B00001000, B00000000},
-  rowData[3] =  {3, B00000000, B00000001, B10000000, B00000000},
-  rowData[4] =  {1, B01000000, B00000000, B00100000, B00000000},
-  rowData[5] =  {3, B01000000, B00000000, B00100000, B00000000},
-  rowData[6] =  {1, B00000000, B00000001, B10000000, B00000000},
-  rowData[7] =  {3, B00010000, B00000000, B00001000, B00000000},
-  rowData[8] =  {1, B00000000, B00000100, B00000000, B00000010},
+  rowData[2] =  {1, B00010000, B11000000, B00001000, B11000000},
+  rowData[3] =  {3, B00000000, B11100001, B10000000, B00000000},
+  rowData[4] =  {1, B01000000, B11100000, B00100000, B00000000},
+  rowData[5] =  {3, B01000000, B11100000, B00100000, B00000000},
+  rowData[6] =  {1, B00000000, B11100001, B10000000, B00000000},
+  rowData[7] =  {3, B00010000, B11100000, B00001000, B00000000},
+  rowData[8] =  {1, B00000000, B11100100, B00000000, B00000010},
   rowData[9] =  {2, B00000000, B00010000, B00000000, B00001000},
   rowData[10] = {1, B00000100, B00000000, B00000010, B00000000},
   rowData[11] = {2, B00000100, B00000000, B00000010, B00000000},
@@ -75,8 +96,8 @@ indexEntry colData[29] =
 {
   colData[0] =  {4, B00000001, B00000000, B00000001, B00000000}, //0 not used
   
-  colData[1] =  {4, B01000000, B00000000, B00100000, B00000000},
-  colData[2] =  {4, B00010000, B00000000, B00001000, B00000000},
+  colData[1] =  {4, B01000000, B11100000, B00100000, B00000000},
+  colData[2] =  {4, B00010000, B11000000, B00001000, B11000000},
   colData[3] =  {4, B00000000, B00000100, B00000000, B00000010},
   colData[4] =  {4, B00000000, B00000001, B10000000, B00000000},
   colData[5] =  {4, B00000000, B00010000, B00000000, B00001000},
@@ -103,28 +124,22 @@ indexEntry colData[29] =
   colData[23] = {7, B00000000, B00010000, B00000000, B00001000},
   colData[24] = {7, B00000100, B00000000, B00000010, B00000000},
 
-
   colData[25] = {8, B01000000, B00000000, B00100000, B00000000},
   colData[26] = {8, B00010000, B00000000, B00001000, B00000000},
   colData[27] = {8, B00000000, B00000100, B00000000, B00000010},
   colData[28] = {8, B00000000, B00000001, B10000000, B00000000},
-
 };
-
-
-bool traceflag = 1;
-
 
 void selectSlave(int chipno)
 {
-        
    digitalWrite(SEL1, defarray[chipno][0]);
    digitalWrite(SEL2, defarray[chipno][1]);
    digitalWrite(SEL3, defarray[chipno][2]);
    digitalWrite(SEL4, defarray[chipno][3]);   
 }
 
-void testMux(int targetaddress){
+/*void testMux(int targetaddress)
+{
   Serial.print("Testing Address:");
   Serial.println(targetaddress);
   selectSlave(targetaddress);
@@ -135,17 +150,16 @@ void testMux(int targetaddress){
     delay(1);
   }
   digitalWrite(CS, HIGH); //returns CS back to init
-}
+}*/
 
-void hpsendStuff(int slaveNo1, byte first, byte second, int slaveNo2, byte third, byte fourth){
+void hpsendStuff(int slaveNo1, byte first, byte second, int slaveNo2, byte third, byte fourth)
+{
    
- 
    byte firstbuffer = 0;
    byte secondbuffer = 0;
    byte thirdbuffer = 0;
    byte fourthbuffer = 0;
 
-   
    SPI.beginTransaction(SPISettings(1000000, LSBFIRST, SPI_MODE1)); 
    
    selectSlave(slaveNo1);
@@ -161,7 +175,7 @@ void hpsendStuff(int slaveNo1, byte first, byte second, int slaveNo2, byte third
    digitalWrite(CS, HIGH); //pulls cs high
    
    SPI.endTransaction();
-/*   
+ 
    Serial.print("OutputSlave_");
    Serial.print(slaveNo1);
    Serial.print(": ");
@@ -174,10 +188,11 @@ void hpsendStuff(int slaveNo1, byte first, byte second, int slaveNo2, byte third
    Serial.print(thirdbuffer, HEX);
    Serial.print("_");
    Serial.println(fourthbuffer, HEX);
-*/
+
 }
 
-void sendStuff(int slaveNo, byte first, byte second){
+void sendStuff(int slaveNo, byte first, byte second)
+{
    
    byte firstbuffer = B00000000;
    byte secondbuffer = B00000000;
@@ -194,73 +209,100 @@ void sendStuff(int slaveNo, byte first, byte second){
    Serial.print(firstbuffer, HEX);
    Serial.print("_");
    Serial.println(secondbuffer, HEX);
-
-   
 }
 
-void resDrivers(){
+void resDrivers()
+{
   for(int i=1; i<9; i++)
   {
     sendStuff(i, RESETBYTE, ZEROES);
     sendStuff(i, RESETBYTE, ZEROES);
-  }
-  
+  } 
 }
 
-void resChip(int chip){
+void resChip(int chip)
+{
   sendStuff(chip, RESETBYTE, ZEROES);
 }
 
 void testwriteBit(int col, int row, int highlow) //fix performance here
 {
+  int fliptime = 100;  //100us for safety, as low as 50us works
+  int capRecoverDel = 100; //100us to let the caps recover
 
-int fliptime = 1000;  //1 ms for safety, as low as 500us works
-int capRecoverDel = 100; //100us to let the caps recover
+  digitalWrite(EN, HIGH); //setup
+  //delay(2);  //this is really the rate limiter
 
-digitalWrite(EN, HIGH); //setup
-//delay(2);  //this is really the rate limiter
-
-
-if (highlow == 1) {
- 
+  if (highlow == 1) 
+  {
    hpsendStuff(colData[col].chip, colData[col].lowfirstcommand, colData[col].lowsecondcommand, 
                rowData[row].chip, rowData[row].highfirstcommand, rowData[row].highsecondcommand);
    hpsendStuff(colData[col].chip, colData[col].lowfirstcommand, colData[col].lowsecondcommand, 
                rowData[row].chip, rowData[row].highfirstcommand, rowData[row].highsecondcommand);
-  delayMicroseconds(fliptime);
+   delayMicroseconds(fliptime);
   }
 
-if (highlow == 0) {
-
-  hpsendStuff(rowData[row].chip, rowData[row].lowfirstcommand, rowData[row].lowsecondcommand, 
-              colData[col].chip, colData[col].highfirstcommand, colData[col].highsecondcommand);
-  hpsendStuff(rowData[row].chip, rowData[row].lowfirstcommand, rowData[row].lowsecondcommand, 
-              colData[col].chip, colData[col].highfirstcommand, colData[col].highsecondcommand);
-  delayMicroseconds(fliptime);
+  if (highlow == 0) 
+  {
+   hpsendStuff(rowData[row].chip, rowData[row].lowfirstcommand, rowData[row].lowsecondcommand, 
+               colData[col].chip, colData[col].highfirstcommand, colData[col].highsecondcommand);
+   hpsendStuff(rowData[row].chip, rowData[row].lowfirstcommand, rowData[row].lowsecondcommand, 
+               colData[col].chip, colData[col].highfirstcommand, colData[col].highsecondcommand);
+   delayMicroseconds(fliptime);
   }
   
-digitalWrite(EN, LOW);
-delayMicroseconds(capRecoverDel);
+  digitalWrite(EN, LOW);
+  delayMicroseconds(capRecoverDel);
 }
 
-void testpanelSweep(){
+void testpanelSweep()
+{
  for (int i=1; i<29; i++){
   for (int j=16; j>0; j--){
-
       testwriteBit(i, j, 1);  
     }
   }
   delay(20);
  for (int i=1; i<29; i++){
   for (int j=16; j>0; j--){
-
       testwriteBit(i, j, 0);
-
     }
   }
   delay(20);
 }
 
+void writeScreen(short writeFrame[29]){
+  const short bitmaskArray[17] = 
+  {
+    0b0000000000000000, //not used, a way to blank stuff
+    0b0000000000000001,
+    0b0000000000000010,
+    0b0000000000000100,
+    0b0000000000001000,
+    0b0000000000010000,
+    0b0000000000100000,
+    0b0000000001000000,
+    0b0000000010000000,
+    0b0000000100000000,
+    0b0000001000000000,
+    0b0000010000000000,
+    0b0000100000000000,
+    0b0001000000000000,
+    0b0010000000000000,
+    0b0100000000000000,
+    0b1000000000000000,
+  }
+  for (int i=1; i<29; i++){
+    for (int j=1; i<17; j++){
+      if (bitmaskArray[j]&writeFrame[i] == 0){
+        testwriteBit(i,j,0);
+      else
+        testwriteBit(i,j,1);
+      }
+    }
+  }
+  currentScreen[29] = writeFrame[29];
+}
 void setup()
 {
     pinMode(CS,   OUTPUT);
@@ -285,11 +327,38 @@ void setup()
     delay(1);
     resDrivers();
     digitalWrite(EN, LOW);  
+
+    Serial.println();
+    Serial.println();
+    Serial.print("Connecting to ");
+    Serial.println(ssid);
+  
+  /* Explicitly set the ESP8266 to be a WiFi-client, otherwise, it by default,
+     would try to act as both a client and an access-point and could cause
+     network-issues with your other WiFi-devices on your WiFi-network. */
+    WiFi.begin(ssid, password);
+  
+    while (WiFi.status() != WL_CONNECTED) {
+      delay(500);
+      Serial.print(".");
+    }
+
+  Serial.println("");
+  Serial.println("WiFi connected");  
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
+  
+  for (int i = 0; i<29; i++){
+    currentScreen[i] = 0b0000000000000000;
+  } 
 }
 
 void loop()
 {
-testwriteBit(2,2,1);
-testwriteBit(1,1,1);
-delay(3000);  
+  writeScreen(currentScreen[29]);
+  /*  
+  currTime = millis();
+  Serial.print("Milliseconds since Boot");
+  Serial.println(currTime);
+  */
 }
