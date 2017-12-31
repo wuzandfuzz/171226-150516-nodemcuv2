@@ -14,6 +14,7 @@
 
 #include <SPI.h>
 
+
 const char* ssid     = "DOOMFORTRESS_24";
 const char* password = "kimokimo84";
 
@@ -28,7 +29,7 @@ const int SEL2 = 4;
 const int SEL3 = 0;
 const int SEL4 = 2;
 
-short currentScreen[29];
+int currentScreen[29];
 int currTime = 0;
 
 uint8_t defarray[9][4] = 
@@ -231,7 +232,7 @@ void testwriteBit(int col, int row, int highlow) //fix performance here
   int capRecoverDel = 100; //100us to let the caps recover
 
   digitalWrite(EN, HIGH); //setup
-  //delay(2);  //this is really the rate limiter
+  delay(2);  //this is really the rate limiter
 
   if (highlow == 1) 
   {
@@ -256,7 +257,7 @@ void testwriteBit(int col, int row, int highlow) //fix performance here
 }
 void serialscreenWrite()
 {
- short bitmaskArray[17] = 
+ int bitmaskArray[17] = 
   {
     0b0000000000000000, //not used, a way to blank stuff
     0b0000000000000001,
@@ -311,8 +312,8 @@ void testpanelSweep()
   delay(20);
 }
 
-void writeScreen(short writeFrame[29]){
-  const short bitmaskArray[17] = 
+void writeScreen(int writeFrame[]){
+  const int bitmaskArray[17] = 
   {
     0b0000000000000000, //not used, a way to blank stuff
     0b0000000000000001,
@@ -334,7 +335,7 @@ void writeScreen(short writeFrame[29]){
   };
   for (int i=1; i<17; i++){
     for (int j=1; j<29; j++){
-      if (bitmaskArray[i]&writeFrame[j] == 0){
+      if (bitmaskArray[i]&&writeFrame[j] == 0){
         testwriteBit(i,j,0);
         }
       else{
@@ -347,29 +348,32 @@ void writeScreen(short writeFrame[29]){
 
 void setup()
 {
-    pinMode(CS,   OUTPUT);
-    pinMode(EN,   OUTPUT);
-    pinMode(SEL1, OUTPUT);
-    pinMode(SEL2, OUTPUT);
-    pinMode(SEL3, OUTPUT);
-    pinMode(SEL4, OUTPUT);
+  int wiFlag=0;
+  pinMode(CS,   OUTPUT);
+  pinMode(EN,   OUTPUT);
+  pinMode(SEL1, OUTPUT);
+  pinMode(SEL2, OUTPUT);
+  pinMode(SEL3, OUTPUT);
+  pinMode(SEL4, OUTPUT);
 
     //initialize
-    digitalWrite(EN,   LOW);
-    digitalWrite(CS,   HIGH); //once you pull CS Low it allows you to select a chip
-    digitalWrite(SEL1, HIGH);
-    digitalWrite(SEL2, HIGH);
-    digitalWrite(SEL3, HIGH);
-    digitalWrite(SEL4, HIGH);
+  digitalWrite(EN,   LOW);
+  digitalWrite(CS,   HIGH); //once you pull CS Low it allows you to select a chip
+  digitalWrite(SEL1, HIGH);
+  digitalWrite(SEL2, HIGH);
+  digitalWrite(SEL3, HIGH);
+  digitalWrite(SEL4, HIGH);
 
-    Serial.begin(9600);
-    delay(1000);
-    SPI.begin();
-    digitalWrite(EN, HIGH);
-    delay(1);
-    resDrivers();
-    digitalWrite(EN, LOW);  
+  Serial.begin(115200);
+  delay(1000);
+  SPI.begin();
+  digitalWrite(EN, HIGH);
+  delay(1);
+  resDrivers();
+  digitalWrite(EN, LOW);
 
+  if (wiFlag ==1)
+  {
     Serial.println();
     Serial.println();
     Serial.print("Connecting to ");
@@ -378,7 +382,7 @@ void setup()
   /* Explicitly set the ESP8266 to be a WiFi-client, otherwise, it by default,
      would try to act as both a client and an access-point and could cause
      network-issues with your other WiFi-devices on your WiFi-network. */
-  /*
+    WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, password);
   
     while (WiFi.status() != WL_CONNECTED) {
@@ -386,11 +390,11 @@ void setup()
       Serial.print(".");
     }
 
-  Serial.println("");
-  Serial.println("WiFi connected");  
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
-  */
+    Serial.println("");
+    Serial.println("WiFi connected");  
+    Serial.println("IP address: ");
+    Serial.println(WiFi.localIP());
+  }
   
   for (int i = 0; i<29; i++){
     currentScreen[i] = 0b0000000000000000;
@@ -399,7 +403,6 @@ void setup()
 
 void loop()
 {
-  //writeScreen(currentScreen);
   serialscreenWrite();
   delay(5000);
 
