@@ -30,6 +30,7 @@ const int SEL3 = 0;
 const int SEL4 = 2;
 
 int currentScreen[29];
+int bufferScreen[29];
 int currTime = 0;
 
 uint8_t defarray[9][4] = 
@@ -155,7 +156,6 @@ void selectSlave(int chipno)
 
 void hpsendStuff(int slaveNo1, byte first, byte second, int slaveNo2, byte third, byte fourth)
 {
-   
    byte firstbuffer = 0;
    byte secondbuffer = 0;
    byte thirdbuffer = 0;
@@ -193,8 +193,7 @@ void hpsendStuff(int slaveNo1, byte first, byte second, int slaveNo2, byte third
 }
 
 void sendStuff(int slaveNo, byte first, byte second)
-{
-   
+{ 
    byte firstbuffer = B00000000;
    byte secondbuffer = B00000000;
 
@@ -285,7 +284,7 @@ void serialscreenWrite()
     }
     Serial.print(":");
     for (int j=1; j<29; j++){
-      if (bitmaskArray[i]&currentScreen[j] == 0){
+      if (bitmaskArray[i]&&currentScreen[j] == 0){
         Serial.print(".");
         }
       else{
@@ -346,6 +345,39 @@ void writeScreen(int writeFrame[]){
   memcpy(writeFrame, currentScreen, sizeof(currentScreen));
 }
 
+void composeScreen(char timeArray[5]){
+  byte blackspace[1]{
+    0b00000000,
+  };
+  byte semicolon[1]{
+    0b00100010,
+  };
+  byte bitmap_0[6]{
+    0b00111110,
+    0b01111111,
+    0b01000001,
+    0b01000001,
+    0b01111111,
+    0b00111110,
+  };
+  byte bitmap_1[3]{
+    0b00100000,
+    0b01111111,
+    0b01111111,
+  };
+  byte bitmap_2[6]{
+    0b01000110,
+    0b11001110,
+    0b10011010,
+    0b10010010,
+    0b11110010,
+    0b01100010,
+  };
+  //first arrange the chars in sequence
+  
+  
+}
+
 void setup()
 {
   int wiFlag=0;
@@ -404,6 +436,7 @@ void setup()
 void loop()
 {
   serialscreenWrite();
+
   delay(5000);
 
   /*  
