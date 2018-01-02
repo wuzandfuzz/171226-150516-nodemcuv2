@@ -635,8 +635,8 @@ void loop()
 {
   serialscreenWrite();
   composeScreen();
-  memcpy(currentScreen, bufferScreen, sizeof(currentScreen));
-
+  writeScreen(bufferScreen);
+ 
   delay(5000);
 
   Serial.print(hour());
