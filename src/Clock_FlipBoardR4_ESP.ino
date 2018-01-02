@@ -9,10 +9,9 @@
 //#include <WiFiClientSecure.h>
 //#include <WiFiServer.h>
 #include <WiFiUdp.h>
-
 #include <dummy.h>
-
 #include <SPI.h>
+#include <TimeLib.h>
 
 
 const char* ssid     = "DOOMFORTRESS_24";
@@ -41,7 +40,8 @@ const int SEL4 = 2;
 
 int currentScreen[29];
 int bufferScreen[29];
-int currTime = 0;
+unsigned long lastretrieved = 0;
+unsigned long currTime = 0;
 
 uint8_t defarray[9][4] = 
 {
@@ -355,38 +355,65 @@ void writeScreen(int writeFrame[]){
   memcpy(writeFrame, currentScreen, sizeof(currentScreen));
 }
 
-void composeScreen(char timeArray[5]){
-  byte blackspace[1]{
-    0b00000000,
+int placeChar(int request, int startPos){
+  int chEntry[12][3] {
+    {0, 0, 6}, //0, {characterid, startpoint, number of bytes in char of interest}
+    {1, 6, 3}, //1
+    {2, 9, 6}, //2
+    {3, 15, 6},
+    {4, 21, 6},
+    {5, 27, 6},
+    {6, 33, 6},
+    {7, 39, 6},
+    {8, 45, 6},
+    {9, 51, 6},
+    {10, 57,1}, //blank
+    {11, 58,1}, //:
   };
-  byte semicolon[1]{
-    0b00100010,
-  };
-  byte bitmap_0[6]{
-    0b00111110,
+
+
+  const int bmpFile[128]{ 
+    0b00111110, //0, starts at [0]
     0b01111111,
     0b01000001,
     0b01000001,
     0b01111111,
-    0b00111110,
-  };
-  byte bitmap_1[3]{
-    0b00100000,
+    0b00111110, //0, ends at [5]
+    0b00100000, //1
     0b01111111,
-    0b01111111,
-  };
-  byte bitmap_2[6]{
-    0b01000110,
+    0b01111111, //1
+    0b01000110, //2
     0b11001110,
     0b10011010,
     0b10010010,
     0b11110010,
-    0b01100010,
+    0b01100010, //2
+    0b00000000, //blank, 10
+    0b00100010, //:, 11
   };
-  //first arrange the chars in sequence
+  for (int i = chEntry[request][1]; i < (chEntry[request][1]+chEntry[request][2]); i++){
+    bufferScreen[startPos+i] = bmpFile[i]|bufferScreen[startPos+i];
+  }
+  return (startPos + chEntry[request][2]);
+}
+
+void composeScreen(){
+
+  int scrPointer = 1;
+  int bufferhour = 1;
+  scrPointer = placeChar(1, 1);
+
+  if (hour() > 12){
+    bufferhour = hour()-12;
+  }
+  if (bufferhour > 9){
+  
+  }
+
 }
 
 void getTime()
+//gets time and converts to PST
 {
   Serial.println();
   Serial.println();
@@ -401,7 +428,7 @@ void getTime()
   delay(5000);
   
   //tries to connect for appx 30 sec. 
-  for (int i=1; i<61; i++) {
+  for (int i=1; i<10; i++) {
     if (WiFi.status() == WL_CONNECTED){
       connected = 1;
       Serial.println("");
@@ -454,7 +481,13 @@ void getTime()
       unsigned long epoch = secsSince1900 - seventyYears;
       // print Unix time:
       Serial.println(epoch);
-      // print the hour, minute and second:
+      setTime(epoch);
+      adjustTime(-28800);  //subtracts 8 hr to get to PST
+      Serial.print(hour());
+      Serial.print(":");
+      Serial.print(minute());
+      /*
+      //print the hour, minute and second:
       Serial.print("The UTC time is ");       // UTC is the time at Greenwich Meridian (GMT)
       Serial.print((epoch  % 86400L) / 3600); // print the hour (86400 equals secs per day)
       Serial.print(':');
@@ -469,9 +502,11 @@ void getTime()
         Serial.print('0');
       }
       Serial.println(epoch % 60); // print the second
+      */
+
     }
     // wait ten seconds before asking for the time again
-    delay(10000);
+    //delay(10000);
   }
   else {
     Serial.println("No Connection Available, stop");
@@ -532,14 +567,27 @@ void setup()
   for (int i = 0; i<29; i++){
     currentScreen[i] = 0b0000000000000000;
   }
+  getTime();
+  Serial.print(hour());
+  Serial.print(":");
+  Serial.print(minute());
+  Serial.print(":");
+  Serial.print(second());
 }
-
 
 void loop()
 {
   serialscreenWrite();
-  getTime();
-  delay(5000);
+  composeScreen();
+  memcpy(currentScreen, bufferScreen, sizeof(currentScreen));
+
+  delay(15000);
+
+  Serial.print(hour());
+  Serial.print(":");
+  Serial.print(minute());
+  Serial.print(":");
+  Serial.println(second());
   /*  
   currTime = millis();
   Serial.print("Milliseconds since Boot");
