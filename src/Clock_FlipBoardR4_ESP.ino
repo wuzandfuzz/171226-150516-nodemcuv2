@@ -38,8 +38,8 @@ const int SEL2 = 4;
 const int SEL3 = 0;
 const int SEL4 = 2;
 
-int currentScreen[29];
-int bufferScreen[29];
+uint16_t currentScreen[29];
+uint16_t bufferScreen[29];
 unsigned long lastretrieved = 0;
 unsigned long currTime = 0;
 
@@ -266,7 +266,8 @@ void testwriteBit(int col, int row, int highlow) //fix performance here
 }
 void serialscreenWrite()
 {
- int bitmaskArray[17] = 
+  uint16_t buffer;
+  const uint16_t bitmaskArray[17] = 
   {
     0b0000000000000000, //not used, a way to blank stuff
     0b0000000000000001,
@@ -294,11 +295,13 @@ void serialscreenWrite()
     }
     Serial.print(":");
     for (int j=1; j<29; j++){
-      if (bitmaskArray[i]&&currentScreen[j] == 0){
-        Serial.print(".");
+      buffer = 0;
+      buffer = bitmaskArray[i]&currentScreen[j];
+      if (buffer == bitmaskArray[i]){
+        Serial.print("#");
         }
       else{
-        Serial.print("#");
+        Serial.print(".");
       }
     }
   Serial.print('\n');
@@ -321,8 +324,9 @@ void testpanelSweep()
   delay(20);
 }
 
-void writeScreen(int writeFrame[]){
-  const int bitmaskArray[17] = 
+void writeScreen(uint16_t writeFrame[]){
+  uint16_t buffer;
+  const uint16_t bitmaskArray[17] = 
   {
     0b0000000000000000, //not used, a way to blank stuff
     0b0000000000000001,
@@ -344,11 +348,12 @@ void writeScreen(int writeFrame[]){
   };
   for (int i=1; i<17; i++){
     for (int j=1; j<29; j++){
-      if (bitmaskArray[i]&&writeFrame[j] == 0){
-        testwriteBit(i,j,0);
+      buffer = bitmaskArray[i]&writeFrame[j];
+      if (bitmaskArray[i] == buffer){
+        testwriteBit(i,j,1);
         }
       else{
-        testwriteBit(i,j,1);
+        testwriteBit(i,j,0);
       }
     }
   }
@@ -371,7 +376,6 @@ int placeChar(int request, int startPos){
     {11, 58,1}, //:
   };
 
-
   const int bmpFile[128]{ 
     0b00111110, //0, starts at [0]
     0b01111111,
@@ -379,20 +383,72 @@ int placeChar(int request, int startPos){
     0b01000001,
     0b01111111,
     0b00111110, //0, ends at [5]
-    0b00100000, //1
+
+    0b00000010, //1
     0b01111111,
-    0b01111111, //1
-    0b01000110, //2
-    0b11001110,
-    0b10011010,
-    0b10010010,
-    0b11110010,
+    0b01111111,
+
     0b01100010, //2
+    0b01110011,
+    0b01011001,
+    0b01001001,
+    0b01001111,
+    0b01000110,
+
+    0b00100010, //3
+    0b01100011,
+    0b01001001,
+    0b01001001,
+    0b01111111,
+    0b00110110,
+
+    0b00011000,
+    0b00010100,
+    0b00010010,
+    0b01111111,
+    0b01111111,
+    0b00010000,
+
+    0b01001111,
+    0b01001111,
+    0b01001001,
+    0b01001001,
+    0b01111001,
+    0b00110000,
+
+    0b00111100,
+    0b01111110,
+    0b01001011,
+    0b01001001,
+    0b01111001,
+    0b00110000,
+
+    0b00000001,
+    0b00000001,
+    0b01110001,
+    0b01111101,
+    0b00001111,
+    0b00000011,
+
+    0b00110110,
+    0b01111111,
+    0b01001001,
+    0b01001001,
+    0b01111111,
+    0b00110110,
+
+    0b00000110,
+    0b01001111,
+    0b01001001,
+    0b01101001,
+    0b00111111,
+    0b00011110,
+
     0b00000000, //blank, 10
     0b00100010, //:, 11
   };
   for (int i = chEntry[request][1]; i < (chEntry[request][1]+chEntry[request][2]); i++){
-    bufferScreen[startPos+i] = bmpFile[i]|bufferScreen[startPos+i];
+    bufferScreen[startPos+i-chEntry[request][1]] = bmpFile[i];
   }
   return (startPos + chEntry[request][2]);
 }
@@ -581,7 +637,7 @@ void loop()
   composeScreen();
   memcpy(currentScreen, bufferScreen, sizeof(currentScreen));
 
-  delay(15000);
+  delay(5000);
 
   Serial.print(hour());
   Serial.print(":");
