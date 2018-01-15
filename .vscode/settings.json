@@ -3,7 +3,7 @@
         "PATH": "/Users/paulimb/.platformio/penv/bin:/Users/paulimb/.rvm/gems/ruby-2.2.5/bin:/Users/paulimb/.rvm/gems/ruby-2.2.5@global/bin:/Users/paulimb/.rvm/rubies/ruby-2.2.5/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/opt/X11/bin:/Users/paulimb/.rvm/bin"
     },
     "terminal.integrated.env.windows": {
-        "PATH": "C:\\Users\\PL\\.platformio\\penv\\Scripts;C:\\Program Files (x86)\\Common Files\\Intel\\Shared Files\\cpp\\bin\\Intel64;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\Users\\PL\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Program Files\\Microsoft VS Code\\bin;C:\\Program Files (x86)\\Common Files\\Intel\\Shared Files\\cpp\\bin\\Intel64;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\Users\\PL\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Program Files\\Microsoft VS Code\\bin"
+        "PATH": "C:\\Users\\PL\\.platformio\\penv\\Scripts;C:\\Program Files (x86)\\Common Files\\Intel\\Shared Files\\cpp\\bin\\Intel64;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\Users\\PL\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Program Files\\Microsoft VS Code\\bin;C:\\Users\\PL\\AppData\\Local\\GitHubDesktop\\bin;C:\\Program Files (x86)\\Common Files\\Intel\\Shared Files\\cpp\\bin\\Intel64;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\Users\\PL\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Program Files\\Microsoft VS Code\\bin;C:\\Users\\PL\\AppData\\Local\\GitHubDesktop\\bin"
     },
     "files.associations": {
         "array": "cpp",

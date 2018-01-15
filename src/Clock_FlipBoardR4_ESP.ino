@@ -237,6 +237,7 @@ void resChip(int chip)
 
 void testwriteBit(int col, int row, int highlow) //fix performance here
 {
+if (col > 0 && col<29 && row > 0 && row <29) { 
   int fliptime = 100;  //100us for safety, as low as 50us works
   int capRecoverDel = 100; //100us to let the caps recover
 
@@ -264,9 +265,17 @@ void testwriteBit(int col, int row, int highlow) //fix performance here
   digitalWrite(EN, LOW);
   delayMicroseconds(capRecoverDel);
 }
-void serialscreenWrite()
+else {
+    Serial.print("Error in ColRow Call");
+    Serial.print("Col: ");
+    Serial.print(col);
+    Serial.print(" Row: ");
+    Serial.println(row);
+  }
+}
+void serialscreenWrite(uint16_t scrFrame[])
 {
-  uint16_t buffer;
+  uint16_t buffer = 0;
   const uint16_t bitmaskArray[17] = 
   {
     0b0000000000000000, //not used, a way to blank stuff
@@ -288,15 +297,15 @@ void serialscreenWrite()
     0b1000000000000000,
   };
   Serial.println("Start Panel");
+
   for (int i=1; i<17; i++){
     Serial.print(i);
     if (i<10){
-      Serial.print(" ");
+      Serial.print(" "); //just for formatting
     }
     Serial.print(":");
     for (int j=1; j<29; j++){
-      buffer = 0;
-      buffer = bitmaskArray[i]&currentScreen[j];
+      buffer = bitmaskArray[i]&scrFrame[j];
       if (buffer == bitmaskArray[i]){
         Serial.print("#");
         }
@@ -346,10 +355,10 @@ void writeScreen(uint16_t writeFrame[]){
     0b0100000000000000,
     0b1000000000000000,
   };
-  for (int i=1; i<17; i++){
-    for (int j=1; j<29; j++){
-      buffer = bitmaskArray[i]&writeFrame[j];
-      if (bitmaskArray[i] == buffer){
+  for (int i=1; i<29; i++){
+    for (int j=16; j>0; j--){
+      buffer = bitmaskArray[j]&writeFrame[i];
+      if (bitmaskArray[j] == buffer){
         testwriteBit(i,j,1);
         }
       else{
@@ -357,7 +366,8 @@ void writeScreen(uint16_t writeFrame[]){
       }
     }
   }
-  memcpy(writeFrame, currentScreen, sizeof(currentScreen));
+  memcpy(currentScreen, writeFrame, sizeof(currentScreen));
+  Serial.println("finished write to panel");
 }
 
 int placeChar(int request, int startPos){
@@ -376,13 +386,13 @@ int placeChar(int request, int startPos){
     {11, 58,1}, //:
   };
 
-  const int bmpFile[128]{ 
-    0b00111110, //0, starts at [0]
-    0b01111111,
-    0b01000001,
-    0b01000001,
-    0b01111111,
-    0b00111110, //0, ends at [5]
+  const uint16_t bmpFile[59]{ 
+    0b0000000000111110, //0, starts at [0]
+    0b0000000001111111,
+    0b0000000001000001,
+    0b0000000001000001,
+    0b0000000001111111,
+    0b0000000000111110, //0, ends at [5]
 
     0b00000010, //1
     0b01111111,
@@ -447,24 +457,22 @@ int placeChar(int request, int startPos){
     0b00000000, //blank, 10
     0b00100010, //:, 11
   };
-  for (int i = chEntry[request][1]; i < (chEntry[request][1]+chEntry[request][2]); i++){
-    bufferScreen[startPos+i-chEntry[request][1]] = bmpFile[i];
+
+  for (int i = 0; i < chEntry[request][2]; i++){
+    int buffercoord = startPos + i;
+    int bmpcoord = i + chEntry[request][1];
+    bufferScreen[buffercoord] = bmpFile[bmpcoord];
   }
-  return (startPos + chEntry[request][2]);
+  return (startPos + chEntry[request][1]);
 }
 
 void composeScreen(){
 
   int scrPointer = 1;
   int bufferhour = 1;
-  scrPointer = placeChar(1, 1);
+  scrPointer = placeChar(2, 1);
+  scrPointer = placeChar(1, 6);
 
-  if (hour() > 12){
-    bufferhour = hour()-12;
-  }
-  if (bufferhour > 9){
-  
-  }
 
 }
 
@@ -633,17 +641,18 @@ void setup()
 
 void loop()
 {
-  serialscreenWrite();
+  Serial.println("Writing Current Screen");
+  serialscreenWrite(currentScreen);
   composeScreen();
-  writeScreen(bufferScreen);
- 
+  Serial.println("Writing Buffer");
+  serialscreenWrite(bufferScreen);
   delay(5000);
 
-  Serial.print(hour());
-  Serial.print(":");
-  Serial.print(minute());
-  Serial.print(":");
-  Serial.println(second());
+  writeScreen(bufferScreen);
+  Serial.println("Writing Dumped Scrneen");
+  serialscreenWrite(currentScreen);
+  delay(5000);
+
   /*  
   currTime = millis();
   Serial.print("Milliseconds since Boot");
