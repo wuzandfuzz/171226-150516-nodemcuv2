@@ -248,7 +248,7 @@ void resChip(int chip)
 
 void testwriteBit(int col, int row, int highlow) //fix performance here
 {
-if (col > 0 && col<29 && row > 0 && row <29) { 
+  if (col > 0 && col<29 && row > 0 && row <29) { 
   int fliptime = 100;  //100us for safety, as low as 50us works
   int capRecoverDel = 100; //100us to let the caps recover
 
@@ -275,8 +275,8 @@ if (col > 0 && col<29 && row > 0 && row <29) {
   
   digitalWrite(EN, LOW);
   delayMicroseconds(capRecoverDel);
-}
-else {
+  }
+  else {
     Serial.print("Error in ColRow Call");
     Serial.print("Col: ");
     Serial.print(col);
@@ -284,6 +284,7 @@ else {
     Serial.println(row);
   }
 }
+
 void serialscreenWrite(uint16_t scrFrame[])
 {
   uint16_t buffer = 0;
@@ -675,7 +676,7 @@ void loop()
 {
   Serial.println("Writing Current Screen");
   serialscreenWrite(currentScreen);
-  composeScreen();
+  composeScreenTime(hour, minute);
   Serial.println("Writing Buffer");
   serialscreenWrite(bufferScreen);
   delay(5000);
