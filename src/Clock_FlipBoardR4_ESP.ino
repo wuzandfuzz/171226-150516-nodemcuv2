@@ -229,7 +229,18 @@ void resDrivers()
     sendStuff(i, RESETBYTE, ZEROES);
   } 
 }
-
+int countOnes(int number)
+{
+  int count=0;
+     if ((number - 1)%10 == 0){
+      count = count + 1;
+     } 
+  
+     if (number - (number%10)==10){
+      count = count +1;
+     }  
+  return count;
+}
 void resChip(int chip)
 {
   sendStuff(chip, RESETBYTE, ZEROES);
@@ -466,14 +477,31 @@ int placeChar(int request, int startPos){
   return (startPos + chEntry[request][1]);
 }
 
-void composeScreen(){
-
+void composeScreenTime(int hourIn, int minuteIn){
+  
   int scrPointer = 1;
-  int bufferhour = 1;
-  scrPointer = placeChar(2, 1);
-  scrPointer = placeChar(1, 6);
+  if (hourIn>9){
+    scrPointer = placeChar(1,2);
+    scrPointer = placeChar((hourIn%10), scrPointer);
+    scrPointer = placeChar(10,scrPointer);
+  }
+  else {
+    scrPointer = placeChar(hourIn, 2);
+    scrPointer = placeChar(10,scrPointer);
+  }
+  scrPointer = placeChar(11,scrPointer);
+  scrPointer = placeChar(10,scrPointer);
 
-
+  if (minuteIn<10){
+    scrPointer = placeChar(0,scrPointer);
+    scrPointer = placeChar(10,scrPointer);
+    scrPointer = placeChar(minuteIn, scrPointer);
+  }
+  else{
+    scrPointer = placeChar(((minuteIn-(minuteIn%10))/10), scrPointer);
+    scrPointer = placeChar(10,scrPointer);
+    scrPointer = placeChar((minuteIn%10), scrPointer);
+  }
 }
 
 void getTime()
@@ -628,15 +656,19 @@ void setup()
   resDrivers();
   digitalWrite(EN, LOW);
 
-  for (int i = 0; i<29; i++){
+  for (int i = 0; i<29; i++) //resets the current screen state buffer
+  {
     currentScreen[i] = 0b0000000000000000;
   }
-  getTime();
-  Serial.print(hour());
-  Serial.print(":");
-  Serial.print(minute());
-  Serial.print(":");
-  Serial.print(second());
+  //more boring stuff that works
+  {  
+    getTime();
+    Serial.print(hour());
+    Serial.print(":");
+    Serial.print(minute());
+    Serial.print(":");
+    Serial.print(second()); 
+  }
 }
 
 void loop()
@@ -649,7 +681,7 @@ void loop()
   delay(5000);
 
   writeScreen(bufferScreen);
-  Serial.println("Writing Dumped Scrneen");
+  Serial.println("Writing Dumped Screen");
   serialscreenWrite(currentScreen);
   delay(5000);
 
