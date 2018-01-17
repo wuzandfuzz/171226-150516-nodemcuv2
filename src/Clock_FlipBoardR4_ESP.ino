@@ -475,7 +475,7 @@ int placeChar(int request, int startPos){
     int bmpcoord = i + chEntry[request][1];
     bufferScreen[buffercoord] = bmpFile[bmpcoord];
   }
-  return (startPos + chEntry[request][1]);
+  return (startPos + chEntry[request][2]);
 }
 
 void composeScreenTime(int hourIn, int minuteIn){
@@ -483,6 +483,7 @@ void composeScreenTime(int hourIn, int minuteIn){
   int scrPointer = 1;
   if (hourIn>9){
     scrPointer = placeChar(1,2);
+    scrPointer = placeChar(10,scrPointer);
     scrPointer = placeChar((hourIn%10), scrPointer);
     scrPointer = placeChar(10,scrPointer);
   }
@@ -676,7 +677,7 @@ void loop()
 {
   Serial.println("Writing Current Screen");
   serialscreenWrite(currentScreen);
-  composeScreenTime(hour, minute);
+  composeScreenTime(hour(), minute());
   Serial.println("Writing Buffer");
   serialscreenWrite(bufferScreen);
   delay(5000);
