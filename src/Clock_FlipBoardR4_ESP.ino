@@ -382,6 +382,44 @@ void writeScreen(uint16_t writeFrame[]){
   Serial.println("finished write to panel");
 }
 
+void writeDifference(uint16_t writeFrame[]){
+  uint16_t buffer;
+  const uint16_t bitmaskArray[17] = 
+  {
+    0b0000000000000000, //not used, a way to blank stuff
+    0b0000000000000001,
+    0b0000000000000010,
+    0b0000000000000100,
+    0b0000000000001000,
+    0b0000000000010000,
+    0b0000000000100000,
+    0b0000000001000000,
+    0b0000000010000000,
+    0b0000000100000000,
+    0b0000001000000000,
+    0b0000010000000000,
+    0b0000100000000000,
+    0b0001000000000000,
+    0b0010000000000000,
+    0b0100000000000000,
+    0b1000000000000000,
+  };
+  for (int i=1; i<29; i++){
+    for (int j=16; j>0; j--){
+      buffer = bitmaskArray[j]&writeFrame[i];
+      if (bitmaskArray[j] == buffer){
+        testwriteBit(i,j,1);
+        }
+      else{
+        testwriteBit(i,j,0);
+      }
+    }
+  }
+  memcpy(currentScreen, writeFrame, sizeof(currentScreen));
+  Serial.println("finished write to panel");
+}
+
+
 int placeChar(int request, int startPos){
   int chEntry[12][3] {
     {0, 0, 6}, //0, {characterid, startpoint, number of bytes in char of interest}
@@ -399,75 +437,75 @@ int placeChar(int request, int startPos){
   };
 
   const uint16_t bmpFile[59]{ 
-    0b0000000000111110, //0, starts at [0]
-    0b0000000001111111,
-    0b0000000001000001,
-    0b0000000001000001,
-    0b0000000001111111,
-    0b0000000000111110, //0, ends at [5]
+    0b001111100, //0, starts at [0]
+    0b011111110,
+    0b010000010,
+    0b010000010,
+    0b011111110,
+    0b001111100, //0, ends at [5]
 
-    0b00000010, //1
-    0b01111111,
-    0b01111111,
+    0b000000100, //1
+    0b011111110,
+    0b011111110,
 
-    0b01100010, //2
-    0b01110011,
-    0b01011001,
-    0b01001001,
-    0b01001111,
-    0b01000110,
+    0b011000100, //2
+    0b011100110,
+    0b010110010,
+    0b010010010,
+    0b010011110,
+    0b010001100,
 
-    0b00100010, //3
-    0b01100011,
-    0b01001001,
-    0b01001001,
-    0b01111111,
-    0b00110110,
+    0b001000100, //3
+    0b011000110,
+    0b010010010,
+    0b010010010,
+    0b011111110,
+    0b001101100,
 
-    0b00011000,
-    0b00010100,
-    0b00010010,
-    0b01111111,
-    0b01111111,
-    0b00010000,
+    0b000110000,
+    0b000101000,
+    0b000100100,
+    0b011111110,
+    0b011111110,
+    0b000100000,
 
-    0b01001111,
-    0b01001111,
-    0b01001001,
-    0b01001001,
-    0b01111001,
-    0b00110000,
+    0b010011110,
+    0b010011110,
+    0b010010010,
+    0b010010010,
+    0b011110010,
+    0b001100000,
 
-    0b00111100,
-    0b01111110,
-    0b01001011,
-    0b01001001,
-    0b01111001,
-    0b00110000,
+    0b001111000,
+    0b011111100,
+    0b010010110,
+    0b010010010,
+    0b011110010,
+    0b001100000,
 
-    0b00000001,
-    0b00000001,
-    0b01110001,
-    0b01111101,
-    0b00001111,
-    0b00000011,
+    0b000000010,
+    0b000000010,
+    0b011100010,
+    0b011111010,
+    0b000011110,
+    0b000000110,
 
-    0b00110110,
-    0b01111111,
-    0b01001001,
-    0b01001001,
-    0b01111111,
-    0b00110110,
+    0b001101100,
+    0b011111110,
+    0b010010010,
+    0b010010010,
+    0b011111110,
+    0b001101100,
 
-    0b00000110,
-    0b01001111,
-    0b01001001,
-    0b01101001,
-    0b00111111,
-    0b00011110,
+    0b000001100,
+    0b010011110,
+    0b010010010,
+    0b011010010,
+    0b001111110,
+    0b000111100,
 
-    0b00000000, //blank, 10
-    0b00100010, //:, 11
+    0b000000000, //blank, 10
+    0b001000100, //:, 11
   };
 
   for (int i = 0; i < chEntry[request][2]; i++){
@@ -480,6 +518,10 @@ int placeChar(int request, int startPos){
 
 void composeScreenTime(int hourIn, int minuteIn){
   
+  if (hourIn > 12){
+    hourIn = 0;
+  } 
+
   int scrPointer = 1;
   if (hourIn>9){
     scrPointer = placeChar(1,2);
@@ -503,6 +545,10 @@ void composeScreenTime(int hourIn, int minuteIn){
     scrPointer = placeChar(((minuteIn-(minuteIn%10))/10), scrPointer);
     scrPointer = placeChar(10,scrPointer);
     scrPointer = placeChar((minuteIn%10), scrPointer);
+  }
+
+  for (int i = scrPointer; i<29; i++){
+    placeChar(10, scrPointer);
   }
 }
 
@@ -671,25 +717,31 @@ void setup()
     Serial.print(":");
     Serial.print(second()); 
   }
+  Serial.println("Writing Current Screen");
+  serialscreenWrite(currentScreen);
+  composeScreenTime(hourFormat12(), minute());
+  Serial.println("Writing Buffer");
+  serialscreenWrite(bufferScreen);
+  writeScreen(bufferScreen);
 }
 
 void loop()
 {
-  Serial.println("Writing Current Screen");
-  serialscreenWrite(currentScreen);
-  composeScreenTime(hour(), minute());
-  Serial.println("Writing Buffer");
-  serialscreenWrite(bufferScreen);
-  delay(5000);
+  delay(1000);
+  composeScreenTime(hourFormat12(), minute());
+  int writeFlag = 0;
+  
+  for (int i = 1; i<29; i++){
+    if (bufferScreen[i] != currentScreen[i]){
+      writeFlag = 1;
+    }
+  }
+  
+  if (writeFlag == 1){
+    writeScreen(bufferScreen);
+  }
+  else {
+    Serial.println("nowrite");
+  }
 
-  writeScreen(bufferScreen);
-  Serial.println("Writing Dumped Screen");
-  serialscreenWrite(currentScreen);
-  delay(5000);
-
-  /*  
-  currTime = millis();
-  Serial.print("Milliseconds since Boot");
-  Serial.println(currTime);
-  */
 }
