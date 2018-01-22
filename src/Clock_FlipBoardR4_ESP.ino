@@ -83,15 +83,15 @@ struct indexEntry
 
 indexEntry rowData[17] =
 {
-  rowData[0] =  {1, B00000001, B11100000, B00000001, B00000000}, //0 not used
+  rowData[0] =  {1, B00000001, B00000000, B00000001, B00000000}, //0 not used
   rowData[1] =  {3, B00000000, B00000100, B00000000, B00000010},
-  rowData[2] =  {1, B00010000, B11000000, B00001000, B11000000},
-  rowData[3] =  {3, B00000000, B11100001, B10000000, B00000000},
-  rowData[4] =  {1, B01000000, B11100000, B00100000, B00000000},
-  rowData[5] =  {3, B01000000, B11100000, B00100000, B00000000},
-  rowData[6] =  {1, B00000000, B11100001, B10000000, B00000000},
-  rowData[7] =  {3, B00010000, B11100000, B00001000, B00000000},
-  rowData[8] =  {1, B00000000, B11100100, B00000000, B00000010},
+  rowData[2] =  {1, B00010000, B00000000, B00001000, B00000000},
+  rowData[3] =  {3, B00000000, B00000001, B10000000, B00000000},
+  rowData[4] =  {1, B01000000, B00000000, B00100000, B00000000},
+  rowData[5] =  {3, B01000000, B00000000, B00100000, B00000000},
+  rowData[6] =  {1, B00000000, B00000001, B10000000, B00000000},
+  rowData[7] =  {3, B00010000, B00000000, B00001000, B00000000},
+  rowData[8] =  {1, B00000000, B00000100, B00000000, B00000010},
   rowData[9] =  {2, B00000000, B00010000, B00000000, B00001000},
   rowData[10] = {1, B00000100, B00000000, B00000010, B00000000},
   rowData[11] = {2, B00000100, B00000000, B00000010, B00000000},
@@ -108,8 +108,8 @@ indexEntry colData[29] =
 {
   colData[0] =  {4, B00000001, B00000000, B00000001, B00000000}, //0 not used
   
-  colData[1] =  {4, B01000000, B11100000, B00100000, B00000000},
-  colData[2] =  {4, B00010000, B11000000, B00001000, B11000000},
+  colData[1] =  {4, B01000000, B00000000, B00100000, B00000000},
+  colData[2] =  {4, B00010000, B00000000, B00001000, B11000000},
   colData[3] =  {4, B00000000, B00000100, B00000000, B00000010},
   colData[4] =  {4, B00000000, B00000001, B10000000, B00000000},
   colData[5] =  {4, B00000000, B00010000, B00000000, B00001000},
@@ -249,8 +249,8 @@ void resChip(int chip)
 void testwriteBit(int col, int row, int highlow) //fix performance here
 {
   if (col > 0 && col<29 && row > 0 && row <29) { 
-  int fliptime = 100;  //100us for safety, as low as 50us works
-  int capRecoverDel = 100; //100us to let the caps recover
+  int fliptime = 200;  //100us for safety, as low as 50us works
+  int capRecoverDel = 5000; //100us to let the caps recover
 
   digitalWrite(EN, HIGH); //setup
   delay(2);  //this is really the rate limiter
@@ -717,16 +717,19 @@ void setup()
     Serial.print(":");
     Serial.print(second()); 
   }
+
   Serial.println("Writing Current Screen");
   serialscreenWrite(currentScreen);
   composeScreenTime(hourFormat12(), minute());
   Serial.println("Writing Buffer");
   serialscreenWrite(bufferScreen);
   writeScreen(bufferScreen);
+
 }
 
 void loop()
 {
+  
   delay(1000);
   composeScreenTime(hourFormat12(), minute());
   int writeFlag = 0;
